@@ -1,5 +1,53 @@
 #include "jeu.h"
 
+void init_classe(t_classev1 classes_disponibles[12]) {
+    char filename[100];
+    FILE* p_fichier_classe = fopen("../Projet/Fichiers textes/DefClasses.txt", "r");
+    //Chargement des sprites des 12 classes
+    for (int j=0;j<12;j++) {
+        for (int i=0; i<8; i++) {
+            snprintf(filename, sizeof(filename),"../Projet/Graphismes/Animations/Persos/%d/%d.bmp", j+1,i+1);
+            classes_disponibles[j].sprite[i] = charger_et_traiter_image(filename, 64,64);
+            if (classes_disponibles[j].sprite[i]==NULL) {
+                printf("\nPerso %d sprite %d introuvable", j+1,i+1);
+            }
+            else {
+                printf("\nPerso %d sprite %d chargee", j+1,i+1);
+            }
+        }
+        for (int i=0; i<4;i++) {
+            for (int k=0;k<3;k++) {
+                snprintf(filename, sizeof(filename),"../Projet/Graphismes/Animations/Competences/%d/%d/%d.bmp", j+1,i+1,k+1);
+                classes_disponibles[j].competences[i].sprite[k] = charger_et_traiter_image(filename, 64,64);
+            }
+        }
+        fscanf("%d", &classes_disponibles[j].pv);
+        fscanf("%d", &classes_disponibles[j].mana);
+        fscanf("%d", &classes_disponibles[j].endurance);
+        fscanf("%d", &classes_disponibles[j].force);
+        fscanf("%d", &classes_disponibles[j].dexterite);
+        fscanf("%d", &classes_disponibles[j].intelligence);
+        fscanf("%d", &classes_disponibles[j].foi);
+        fscanf("%d", &classes_disponibles[j].r_contandant);
+        fscanf("%d", &classes_disponibles[j].r_tranchant);
+        fscanf("%d", &classes_disponibles[j].r_percant);
+        fscanf("%d", &classes_disponibles[j].r_eau);
+        fscanf("%d", &classes_disponibles[j].r_feu);
+        fscanf("%d", &classes_disponibles[j].r_terre);
+
+        for (int i=0; i<4;i++) {
+            //strtok()
+            fgets(classes_disponibles[j].competences[i].nom_competence, sizeof(classes_disponibles[j].competences[i].nom_competence), p_fichier_classe);
+            fscanf("%d", &classes_disponibles[j].competences[i].ID_competence);
+            fscanf("%d", &classes_disponibles[j].competences[i].degat);
+            fscanf("%d", &classes_disponibles[j].competences[i].p_attaque);
+            fscanf("%d", &classes_disponibles[j].competences[i].portee);
+            fscanf("%c", &classes_disponibles[j].competences[i].type_degat);
+            fscanf("%c", &classes_disponibles[j].competences[i].type_stat);
+        }
+    }
+    fclose(p_fichier_classe);
+}
 
 BITMAP* curseur;  // Déclaration du curseur global
 
@@ -9,6 +57,124 @@ void init_coord(Game * game) {
 
     game->players[2].x = 0; game->players[2].y = PLAT_Y-1;
     game->players[3].x = PLAT_X-1; game->players[3].y = 0;
+}
+#include <stdbool.h>
+
+bool est_case_valide_BFS(int x, int y, int map[PLAT_Y][PLAT_X]) {
+    if (x < 0 || x >= PLAT_X || y < 0 || y >= PLAT_Y) return false;
+    if (map[y][x] != 0) return false;
+    return map[y][x] == 0;
+}
+bool verif_BFS(const int x_init,const int y_init, int map_carth[PLAT_Y][PLAT_X], int x_dest, int y_dest) {
+    if (map_carth[y_dest][x_dest] != 0) {
+        return false;
+    }
+    if (!est_case_valide_BFS(x_dest, y_dest, map_carth)) return false;
+
+    int visitee[PLAT_Y][PLAT_X];
+    for (int i = 0; i < PLAT_Y; i++) {
+        for (int j = 0; j < PLAT_X; j++) {
+            if (map_carth[i][j] != 0) {
+                visitee[i][j] = -1;
+            }
+            else {
+                visitee[i][j] = 0;
+            }
+        }
+    }
+    Node prev[PLAT_Y][PLAT_X];
+
+    // File pour BFS
+    int queue_x[MAX_NODE], queue_y[MAX_NODE];
+    int front = 0, back = 0;
+
+    // Point de départ
+    queue_x[back] = x_init;
+    queue_y[back] = y_init;
+    back++;
+    visitee[y_init][x_init] = 1;
+
+    bool found = false;
+
+    // BFS
+    while (front < back && !found) {
+        int ux = queue_x[front];
+        int uy = queue_y[front];
+        front++;
+
+        int directions[4][2] = {{0,-1},{0,1},{-1,0},{1,0}};
+        for (int i = 0; i < 4; i++) {
+            int vx = ux + directions[i][0];
+            int vy = uy + directions[i][1];
+
+            if (est_case_valide_BFS(vx, vy, map_carth) && visitee[vy][vx]==0) {
+                visitee[vy][vx] = 1;
+                prev[vy][vx].x = ux;
+                prev[vy][vx].y = uy;
+                queue_x[back] = vx;
+                queue_y[back] = vy;
+                back++;
+
+                if (vx == x_dest && vy == y_dest) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+
+ // Si un chemin a été trouvé
+    if (found) {
+        // On remonte le chemin
+        int cx = x_dest;
+        int cy = y_dest;
+        int path[MAX_NODE][2];
+        int path_len = 0;
+
+        while (!(cx == x_init && cy == y_init)) {
+            path[path_len][0] = cx;
+            path[path_len][1] = cy;
+            int px = prev[cy][cx].x;
+            int py = prev[cy][cx].y;
+            cx = px;
+            cy = py;
+            path_len++;
+        }
+    }
+    return found;
+}
+
+void generation_map(int tiles [PLAT_Y][PLAT_X]) {
+
+    int temp=-1;
+    int verif_chemin=0;
+
+    while (verif_chemin<3) {
+        verif_chemin=0;
+        //Génération dans un tableau
+        for (int y = 0; y < PLAT_Y; y++) {
+            for (int x = 0; x < PLAT_X; x++) {
+                temp = 1+rand()%6; //probabilité de 2/3 comme taux d'apparition de cases de déplacement
+                if (temp==4 || temp==5 || temp ==6) {
+                    temp = 1;
+                }
+                if ( y==0 && x==0 || y==19 && x==19 ||y==0 && x==19 || y == 19 && x == 0) {
+                    temp = 1;
+                }
+                tiles[y][x] = temp;
+            }
+        }
+
+        if (verif_BFS(0,0,tiles,19,19)) {
+            verif_chemin++;
+        }
+        if (verif_BFS(0,0,tiles,19,0)) {
+            verif_chemin++;
+        }
+        if (verif_BFS(0,0,tiles,0,19)) {
+            verif_chemin++;
+        }
+    }
 }
 
 void init_plato(Game * game) {
