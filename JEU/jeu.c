@@ -1,53 +1,65 @@
 #include "jeu.h"
 
+void transfert_temp_resistance(int r_temp, float* r_resistance) {
+    if (r_temp==0) *r_resistance = 0.5;
+    else if (r_temp==1) *r_resistance = 1;
+    else if (r_temp==2) *r_resistance = 2;
+}
 void init_classe(t_classev1 classes_disponibles[12]) {
-    char filename[100];
-    FILE* p_fichier_classe = fopen("../Projet/Fichiers textes/DefClasses.txt", "r");
-    //Chargement des sprites des 12 classes
+    int lenght_nom [12][4];
+    char filename[50];
+    int temp;
+    FILE* p_fichier_classe = fopen("../DefClassesv2.txt", "r");
+    printf("fichier ouvert\n");
+
+    //chargement des tailles des noms competences des 12 classes
+    for (int i=0; i<12;i++) {
+        for (int j=0; j<4;j++) {
+            fscanf(p_fichier_classe,"%d", &lenght_nom[i][j]);
+        }
+    }
+
+    //Chargement des données des 12 classes
     for (int j=0;j<12;j++) {
-        for (int i=0; i<8; i++) {
-            snprintf(filename, sizeof(filename),"../Projet/Graphismes/Animations/Persos/%d/%d.bmp", j+1,i+1);
-            classes_disponibles[j].sprite[i] = charger_et_traiter_image(filename, 64,64);
-            if (classes_disponibles[j].sprite[i]==NULL) {
-                printf("\nPerso %d sprite %d introuvable", j+1,i+1);
-            }
-            else {
-                printf("\nPerso %d sprite %d chargee", j+1,i+1);
-            }
-        }
-        for (int i=0; i<4;i++) {
-            for (int k=0;k<3;k++) {
-                snprintf(filename, sizeof(filename),"../Projet/Graphismes/Animations/Competences/%d/%d/%d.bmp", j+1,i+1,k+1);
-                classes_disponibles[j].competences[i].sprite[k] = charger_et_traiter_image(filename, 64,64);
-            }
-        }
-        fscanf("%d", &classes_disponibles[j].pv);
-        fscanf("%d", &classes_disponibles[j].mana);
-        fscanf("%d", &classes_disponibles[j].endurance);
-        fscanf("%d", &classes_disponibles[j].force);
-        fscanf("%d", &classes_disponibles[j].dexterite);
-        fscanf("%d", &classes_disponibles[j].intelligence);
-        fscanf("%d", &classes_disponibles[j].foi);
-        fscanf("%d", &classes_disponibles[j].r_contandant);
-        fscanf("%d", &classes_disponibles[j].r_tranchant);
-        fscanf("%d", &classes_disponibles[j].r_percant);
-        fscanf("%d", &classes_disponibles[j].r_eau);
-        fscanf("%d", &classes_disponibles[j].r_feu);
-        fscanf("%d", &classes_disponibles[j].r_terre);
+        fscanf(p_fichier_classe,"%d", &classes_disponibles[j].pv);
+        fscanf(p_fichier_classe,"%d", &classes_disponibles[j].mana);
+        fscanf(p_fichier_classe,"%d", &classes_disponibles[j].endurance);
+        fscanf(p_fichier_classe,"%d", &classes_disponibles[j].force);
+        fscanf(p_fichier_classe,"%d", &classes_disponibles[j].dexterite);
+        fscanf(p_fichier_classe,"%d", &classes_disponibles[j].intelligence);
+        fscanf(p_fichier_classe,"%d", &classes_disponibles[j].foi);
+
+
+        fscanf(p_fichier_classe,"%d", &temp);
+        transfert_temp_resistance(temp, &classes_disponibles[j].r_contandant);
+        fscanf(p_fichier_classe,"%d", &temp);
+        transfert_temp_resistance(temp, &classes_disponibles[j].r_tranchant);
+        fscanf(p_fichier_classe,"%d", &temp);
+        transfert_temp_resistance(temp, &classes_disponibles[j].r_percant);
+        fscanf(p_fichier_classe,"%d", &temp);
+        transfert_temp_resistance(temp, &classes_disponibles[j].r_eau);
+        fscanf(p_fichier_classe,"%d", &temp);
+        transfert_temp_resistance(temp, &classes_disponibles[j].r_feu);
+        fscanf(p_fichier_classe,"%d", &temp);
+        transfert_temp_resistance(temp, &classes_disponibles[j].r_terre);
 
         for (int i=0; i<4;i++) {
-            //strtok()
-            fgets(classes_disponibles[j].competences[i].nom_competence, sizeof(classes_disponibles[j].competences[i].nom_competence), p_fichier_classe);
-            fscanf("%d", &classes_disponibles[j].competences[i].ID_competence);
-            fscanf("%d", &classes_disponibles[j].competences[i].degat);
-            fscanf("%d", &classes_disponibles[j].competences[i].p_attaque);
-            fscanf("%d", &classes_disponibles[j].competences[i].portee);
-            fscanf("%c", &classes_disponibles[j].competences[i].type_degat);
-            fscanf("%c", &classes_disponibles[j].competences[i].type_stat);
+            char token;
+            fscanf(p_fichier_classe, "%c", &token); //Liberation espace
+            fgets(classes_disponibles[j].competences[i].nom_competence, lenght_nom[j][i]+1, p_fichier_classe);
+            fscanf(p_fichier_classe,"%d", &classes_disponibles[j].competences[i].ID_competence);
+            fscanf(p_fichier_classe,"%d", &classes_disponibles[j].competences[i].degat);
+            fscanf(p_fichier_classe,"%d", &classes_disponibles[j].competences[i].p_attaque);
+            fscanf(p_fichier_classe,"%d", &classes_disponibles[j].competences[i].portee);
+            fscanf(p_fichier_classe, "%c", &token); //Liberation espace
+            fscanf(p_fichier_classe,"%c", &classes_disponibles[j].competences[i].type_degat);
+            fscanf(p_fichier_classe, "%c", &token); //Liberation espace
+            fscanf(p_fichier_classe,"%c", &classes_disponibles[j].competences[i].type_stat);
         }
     }
     fclose(p_fichier_classe);
 }
+
 
 BITMAP* curseur;  // Déclaration du curseur global
 
