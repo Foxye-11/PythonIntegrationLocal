@@ -9,7 +9,7 @@ void init_classe(t_classev1 classes_disponibles[12]) {
     int lenght_nom [12][4];
     char filename[50];
     int temp;
-    FILE* p_fichier_classe = fopen("./Projet/Fichiers textes/DefClasses.txt", "r");
+    FILE* p_fichier_classe = fopen("../Projet/Fichiers textes/DefClasses.txt", "r");
 
     //chargement des tailles des noms competences des 12 classes
     for (int i=0; i<12;i++) {
