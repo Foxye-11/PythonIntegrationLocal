@@ -132,21 +132,24 @@ Perso init_player_graphique(int num) {
     }
     appliquer_transparence_curseur(curseur);
 
-    // Redimension du curseur (32x32)
+    // Redimensionner le curseur à 32×32
     BITMAP* curseur_redimensionne = create_bitmap(32, 32);
     if (!curseur_redimensionne) {
         allegro_message("Erreur lors de la création du curseur redimensionné !");
         exit(EXIT_FAILURE);
     }
     stretch_blit(curseur, curseur_redimensionne,
-                0, 0, curseur->w, curseur->h,
-                0, 0, 32, 32);
+                 0, 0, curseur->w, curseur->h,
+                 0, 0, 32, 32);
     curseur = curseur_redimensionne;
 
     // Charger l'image du numéro de joueur (1 à 4)
     char chemin_joueur[256];
-    sprintf(chemin_joueur, "../Projet/Graphismes/Menus/Joueurs/%d.bmp", num + 1);
-    BITMAP* img_joueur = charger_et_traiter_image(chemin_joueur, 256, 64);
+    sprintf(chemin_joueur,
+            "../Projet/Graphismes/Menus/Joueurs/%d.bmp",
+            num + 1);
+    BITMAP* img_joueur = charger_et_traiter_image(
+        chemin_joueur, 256, 64);
     if (!img_joueur) {
         allegro_message("Erreur lors du chargement de l'image du numéro de joueur !");
         exit(EXIT_FAILURE);
@@ -154,14 +157,27 @@ Perso init_player_graphique(int num) {
 
     // Charger l'image de la case de saisie du pseudo
     BITMAP* casePseudo = charger_et_traiter_image(
-        "../Projet/Graphismes/Interface/Pseudo/casePseudo.bmp", 1235, 128);
+        "../Projet/Graphismes/Interface/Pseudo/casePseudo.bmp",
+        1235, 128);
     if (!casePseudo) {
         allegro_message("Erreur lors du chargement de la case pseudo !");
         exit(EXIT_FAILURE);
     }
 
-    // Initialisation des boutons
-    const char* bouton_paths[] = { "../Projet/Graphismes/Menus/Boutons/VALIDATE.bmp" };
+    // Charger l'image décorative « Choisis ton pseudo »
+    BITMAP* choixPseudo = charger_et_traiter_image(
+        "../Projet/Graphismes/Menus/ChoisisPseudo/chooseYourPseudo.bmp",
+        256, 128);
+    if (!choixPseudo) {
+        allegro_message("Erreur lors du chargement de l'image décorative !");
+        exit(EXIT_FAILURE);
+    }
+    appliquer_transparence_curseur(choixPseudo);
+
+    // Initialisation du bouton « Valider »
+    const char* bouton_paths[] = {
+        "../Projet/Graphismes/Menus/Boutons/VALIDATE.bmp"
+    };
     const int nb_boutons = 1;
     Bouton boutons[nb_boutons];
     init_boutons(boutons, bouton_paths, nb_boutons);
@@ -171,25 +187,31 @@ Perso init_player_graphique(int num) {
 
     show_mouse(NULL);
 
+    // Préparation de la structure Perso
     Perso self;
     self.x = self.y = -1;
     strcpy(self.pseudo, "");
     strcpy(self.avatar, "a");
 
+    // Boucle principale d'interaction
     while (1) {
+        // Effacer le buffer
         clear_to_color(buffer, makecol(0, 0, 0));
-        // Fond
+
+        // Dessiner le fond
         stretch_blit(fond, buffer,
-                    0, 0, fond->w, fond->h,
-                    0, 0, SCREEN_W, SCREEN_H);
-        // Boutons
+                     0, 0, fond->w, fond->h,
+                     0, 0, SCREEN_W, SCREEN_H);
+
+        // Afficher le bouton « Valider »
         afficher_boutons(buffer, boutons, nb_boutons);
 
-        // Afficher l'image du numéro de joueur en haut à gauche
+        // Afficher l'image du numéro de joueur
         draw_sprite(buffer, img_joueur,
-                    SCREEN_W / 100 + 450, SCREEN_H / 100 + 150);
+                    SCREEN_W/100 + 450,
+                    SCREEN_H/100 + 150);
 
-        // Clic sur Valider
+        // Détecter clic sur « Valider »
         if (mouse_b & 1) {
             int index = bouton_clique(boutons, nb_boutons, mouse_x, mouse_y);
             if (index != -1 && strlen(self.pseudo) > 0)
@@ -202,10 +224,15 @@ Perso init_player_graphique(int num) {
         int zone_w = SCREEN_W / 2;
         int zone_h = SCREEN_H / 12;
 
-        // Affichage de la case pseudo
+        // Afficher la case pseudo
         draw_sprite(buffer, casePseudo, zone_x, zone_y);
 
-        // Afficher le pseudo entré légèrement décalé
+        // Afficher l'image décorative à gauche de la case
+        int deco_x = zone_x - choixPseudo->w + 80;
+        int deco_y = zone_y + (casePseudo->h - choixPseudo->h) / 2 - 200;
+        draw_sprite(buffer, choixPseudo, deco_x, deco_y);
+
+        // Afficher le texte du pseudo entré
         char pseudo_affiche[22];
         sprintf(pseudo_affiche, "%s", self.pseudo);
         BITMAP* texte_pseudo = create_bitmap(8 * 20, 16);
@@ -218,7 +245,7 @@ Perso init_player_graphique(int num) {
                        zone_w - 20, zone_h - 15);
         destroy_bitmap(texte_pseudo);
 
-        // Gestion clavier
+        // Gestion de la saisie clavier
         if (keypressed()) {
             int keycode = readkey();
             int k = keycode >> 8;
@@ -234,19 +261,27 @@ Perso init_player_graphique(int num) {
             }
         }
 
-        // Curseur personnalisé
-        stretch_sprite(buffer, curseur_redimensionne,
-                       mouse_x, mouse_y, 32, 32);
-        blit(buffer, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);
+        // ** Afficher le curseur personnalisé avec masque **
+        stretch_sprite(buffer,
+                       curseur_redimensionne,
+                       mouse_x, mouse_y,
+                       32, 32);
+
+        // Transférer à l'écran
+        blit(buffer, screen,
+             0, 0, 0, 0,
+             SCREEN_W, SCREEN_H);
+
         rest(10);
     }
 
-    // Libération des ressources
+    // --- Libération des ressources ---
     destroy_bitmap(buffer);
     destroy_bitmap(fond);
     destroy_bitmap(curseur_redimensionne);
     destroy_bitmap(img_joueur);
     destroy_bitmap(casePseudo);
+    destroy_bitmap(choixPseudo);
     detruire_boutons(boutons, nb_boutons);
     clear_keybuf();
 
