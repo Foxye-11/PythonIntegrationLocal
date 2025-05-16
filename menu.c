@@ -288,6 +288,141 @@ Perso init_player_graphique(int num) {
     return self;
 }
 
+void menu_selec_perso(Perso* self) {
+    // 1) Création du buffer
+    BITMAP* buffer = create_bitmap(SCREEN_W, SCREEN_H);
+    if (!buffer) {
+        allegro_message("Erreur création buffer menu_selec_perso");
+        exit(EXIT_FAILURE);
+    }
+
+    // 2) Chargement du fond plein écran
+    BITMAP* fond = load_bitmap(
+        "../Projet/Graphismes/Menus/Screen/Selection.bmp",
+        NULL
+    );
+    if (!fond) {
+        allegro_message("Impossible de charger le fond de sélection");
+        destroy_bitmap(buffer);
+        exit(EXIT_FAILURE);
+    }
+
+    // 3) Paramètres de la grille
+    // Position de départ (encre) : ajustez selon votre visuel
+    int origin_x = SCREEN_W * 3 / 4;  // ex. à 75% de la largeur
+    int origin_y = SCREEN_H / 6;      // ex. à 16% de la hauteur
+
+    // Taille de chaque case
+    int cell_w = 120;
+    int cell_h = 120;
+
+    // Espacement éventuel entre cases
+    int padding = 10;
+
+    show_mouse(NULL);
+    int choix = -1;
+
+    // 4) Boucle d'affichage et de sélection
+    while (choix < 0) {
+        // a) fond
+        stretch_blit(fond, buffer,
+                     0, 0, fond->w, fond->h,
+                     0, 0, SCREEN_W, SCREEN_H);
+
+        // b) cercle rouge à l'origine
+        circle(buffer,
+               origin_x,
+               origin_y,
+               5,               // rayon du cercle
+               makecol(255, 0, 0));  // rouge
+
+        // c) grille 3×4 en rectangles bleus
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 4; col++) {
+                int x = origin_x + col * (cell_w + padding);
+                int y = origin_y + row * (cell_h + padding);
+                rect(buffer,
+                     x, y,
+                     x + cell_w,
+                     y + cell_h,
+                     makecol(0, 0, 255));  // bleu
+            }
+        }
+
+        // d) curseur personnalisé
+        if (curseur) {
+            draw_sprite(buffer, curseur, mouse_x, mouse_y);
+        }
+
+        // e) affichage à l'écran
+        blit(buffer, screen,
+             0, 0,
+             0, 0,
+             SCREEN_W, SCREEN_H);
+        rest(10);
+
+        // f) gestion du clic : déterminer quelle case contient (mouse_x,mouse_y)
+        if (mouse_b & 1) {
+            rest(100);  // anti-double-clic
+            for (int row = 0; row < 3 && choix < 0; row++) {
+                for (int col = 0; col < 4; col++) {
+                    int x = origin_x + col * (cell_w + padding);
+                    int y = origin_y + row * (cell_h + padding);
+                    if (mouse_x >= x && mouse_x < x + cell_w &&
+                        mouse_y >= y && mouse_y < y + cell_h) {
+                        choix = row * 4 + col;  // indice 0..11
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // 5) Enregistrer le choix
+    sprintf(self->avatar, "%d", choix + 1);
+
+    // 6) Libération
+    destroy_bitmap(buffer);
+    destroy_bitmap(fond);
+    clear_keybuf();
+}
+void menu_afficher_image(const char* chemin_image) {
+    // 1) Charger l'image
+    BITMAP* img = load_bitmap(chemin_image, NULL);
+    if (!img) {
+        allegro_message("Impossible de charger l'image : %s", chemin_image);
+        exit(EXIT_FAILURE);
+    }
+
+    // 2) Créer un buffer temporaire (optionnel, mais permet de ne pas bloquer l'écran)
+    BITMAP* buffer = create_bitmap(SCREEN_W, SCREEN_H);
+    if (!buffer) {
+        allegro_message("Erreur création buffer dans menu_afficher_image");
+        destroy_bitmap(img);
+        exit(EXIT_FAILURE);
+    }
+
+    // 3) Étirer l'image dans le buffer à la taille de l'écran
+    stretch_blit(img, buffer,
+                 0, 0, img->w, img->h,   // zone source
+                 0, 0, SCREEN_W, SCREEN_H); // zone destination
+
+    // 4) Afficher immédiatement le buffer
+    blit(buffer, screen,
+         0, 0,   // src x,y
+         0, 0,   // dst x,y
+         SCREEN_W, SCREEN_H);
+
+    // 5) Attendre un clic de souris (ou un délai si vous préférez)
+    while (!(mouse_b & 1)) {
+        rest(10);
+    }
+
+    // 6) Libération des ressources
+    destroy_bitmap(buffer);
+    destroy_bitmap(img);
+    clear_keybuf();
+}
 
 void menu_waiting() {
     BITMAP* buffer = create_bitmap(SCREEN_W, SCREEN_H);

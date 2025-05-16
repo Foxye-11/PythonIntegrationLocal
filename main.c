@@ -10,7 +10,6 @@ int SCREEN_HEIGHT = 0;
 
 BITMAP* curseur;
 
-
 void initialisation_allegro();
 
 int main() {
@@ -18,41 +17,60 @@ int main() {
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
 #endif
+
     char username[MAX_USERNAME];
     printf("\n");
     version();
     printf("\n");
     name(username);
-    Perso self;
 
     int choix = 0;
     while (choix != 3) {
         menu(&choix);
         switch (choix) {
-            case 0: {
+        case 0: {
                 init_nb_players_graphique();
                 printf("\nChoix des joueurs (%d)\n", NB_JOUEURS);
+
+                // 1) Saisie des pseudos
                 Perso liste[NB_JOUEURS];
                 for (int i = 0; i < NB_JOUEURS; i++) {
                     liste[i] = init_player_graphique(i);
                 }
+
+                // 2) Transition avant la sélection de personnages
+                menu_afficher_image(
+                    "../Projet/Graphismes/Menus/Screen/Selection.bmp"
+                );
+
+                // 3) Sélection de personnage en boucle (un tour par joueur)
+                for (int i = 0; i < NB_JOUEURS; i++) {
+                    menu_selec_perso(&liste[i]);
+                }
+
+                // 4) Lancement du jeu en mode local
                 local(liste);
                 break;
-            }
-            case 1:
+        }
+
+            case 1: {
                 init_nb_players_graphique();
-                self = init_player_graphique(-1);
+                Perso self = init_player_graphique(-1);
                 serveur();
                 attendre_serveur();
                 menu_waiting();
                 client(username, self);
                 break;
-            case 2:
+            }
+
+            case 2: {
                 init_nb_players_graphique();
-                self = init_player_graphique(-1);
+                Perso self = init_player_graphique(-1);
                 menu_waiting();
                 client(username, self);
                 break;
+            }
+
             default:
                 break;
         }
