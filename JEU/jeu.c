@@ -7,7 +7,6 @@ void transfert_temp_resistance(int r_temp, float* r_resistance) {
 }
 void init_classe(t_classev1 classes_disponibles[12]) {
     int lenght_nom [12][4];
-    char filename[50];
     int temp;
     FILE* p_fichier_classe = fopen("../Projet/Fichiers textes/DefClasses.txt", "r");
 
@@ -232,7 +231,7 @@ void tour(Game * game, int num, char * data) {
 }
 
 void process_data(Game * game, int num, char * data) {
-    sscanf(data, "%d %d", &game->players[num].x, &game->players[num].y);
+    scanf(data, "%d %d", &game->players[num].x, &game->players[num].y);
 }
 
 void init_nb_players() {
