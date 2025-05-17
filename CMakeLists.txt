@@ -34,4 +34,4 @@ if(WIN32)
 endif()
 
 
-target_link_libraries(${PROJECT} -lmingw32 -lalleg44)
+target_link_libraries(${PROJECT} -lmingw32 -lalleg44 )
